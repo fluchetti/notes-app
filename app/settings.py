@@ -137,7 +137,7 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
+    'http://localhost:5173', 'https://famous-souffle-9aa4dd.netlify.app',
 ]
 
 

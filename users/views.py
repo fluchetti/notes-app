@@ -9,7 +9,9 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from django.core.mail import send_mail
-from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
 
 class UserRegisterView(APIView):
@@ -133,18 +135,44 @@ class RequestPasswordResetView(APIView):
         return CustomUser.objects.all()
 
     def post(self, request):
-        print('EN POST DE REQUESTPASSWORDRESET')
         email = request.data['email']
-        if self.get_queryset().filter(email=email).first() is not None:
-            print('user not none')
-            try:
-                subject = 'Recuperar contraseña'
-                message = 'Estamos desarrollando la funcionalidad de restaurar la contraseña.'
-                send_mail(subject, message, None, [email])
-                print('te mande un mail capo')
-                return Response({'Mensaje': 'Email mandado..'}, status=status.HTTP_200_OK)
-            except Exception as e:
-                error_message = str(e)
-                return Response({'Error': error_message}, status=status.HTTP_400_BAD_REQUEST)
-        print('User none')
-        return Response({'Mensaje': 'No se ha registrado un usuario con ese mail'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response({'Error': 'No se ha registrado un usuario con este mail.'}, status=status.HTTP_404_NOT_FOUND)
+        token_generator = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        # Construye el enlace de restablecimiento de contraseña
+        reset_link = f"http://tu-domino.com/reset-password/{uid}/{token_generator}/"
+
+        # Envía el correo electrónico
+        subject = 'Restablecer contraseña'
+        message = f'Sigue este enlace para restablecer tu contraseña: {reset_link}'
+        send_mail(subject, message, None, [email])
+
+        return Response({'message': 'Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña'}, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny,]
+
+    def post(self, request):
+        email = request.data.get('email')
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'No se ha registrado un usuario con ese correo electrónico'}, status=status.HTTP_404_NOT_FOUND)
+
+        token_generator = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        # Construye el enlace de restablecimiento de contraseña
+        reset_link = f"http://tu-domino.com/reset-password/{uid}/{token_generator}/"
+
+        # Envía el correo electrónico
+        subject = 'Restablecer contraseña'
+        message = f'Sigue este enlace para restablecer tu contraseña: {reset_link}'
+        send_mail(subject, message, None, [email])
+
+        return Response({'message': 'Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña'}, status=status.HTTP_200_OK)
