@@ -25,7 +25,8 @@ SECRET_KEY = "django-insecure-c-t&)hz@z&53-af^4((vu=3#u^ggeid_n!-h9)4#jt7f5wpb&(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['fluchetti.pythonanywhere.com',
+                 'famous-souffle-9aa4dd.netlify.app']
 
 
 # Application definition
