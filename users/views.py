@@ -135,6 +135,7 @@ class RequestPasswordResetView(APIView):
         return CustomUser.objects.all()
 
     def post(self, request):
+        print('EN POST DE REQUESTPASSWORDRESETVIEW')
         email = request.data['email']
         try:
             user = CustomUser.objects.get(email=email)
@@ -144,7 +145,7 @@ class RequestPasswordResetView(APIView):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
 
         # Construye el enlace de restablecimiento de contraseña
-        reset_link = f"https://fluchetti.pythonanywhere.com/users/reset_password/confirm/{uid}/{token_generator}/"
+        reset_link = f"http://localhost:5173/change_password/{uid}/{token_generator}/"
 
         # Envía el correo electrónico
         subject = 'Restablecer contraseña'
@@ -158,6 +159,7 @@ class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny,]
 
     def post(self, request, uidb64, token):
+        print('EN POST DE PASSWORDRESETCONFIRM')
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = CustomUser.objects.get(pk=uid)
