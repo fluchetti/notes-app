@@ -10,8 +10,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 
 
 class UserRegisterView(APIView):
@@ -144,7 +144,7 @@ class RequestPasswordResetView(APIView):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
 
         # Construye el enlace de restablecimiento de contraseña
-        reset_link = f"http://tu-domino.com/reset-password/{uid}/{token_generator}/"
+        reset_link = f"https://fluchetti.pythonanywhere.com/users/reset_password/confirm/{uid}/{token_generator}/"
 
         # Envía el correo electrónico
         subject = 'Restablecer contraseña'
@@ -154,25 +154,25 @@ class RequestPasswordResetView(APIView):
         return Response({'message': 'Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña'}, status=status.HTTP_200_OK)
 
 
-class PasswordResetRequestView(APIView):
+class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny,]
 
-    def post(self, request):
-        email = request.data.get('email')
+    def post(self, request, uidb64, token):
         try:
-            user = CustomUser.objects.get(email=email)
-        except CustomUser.DoesNotExist:
-            return Response({'error': 'No se ha registrado un usuario con ese correo electrónico'}, status=status.HTTP_404_NOT_FOUND)
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = CustomUser.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+            user = None
 
-        token_generator = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        if user is not None and default_token_generator.check_token(user, token):
+            # Aquí puedes implementar la lógica para restablecer la contraseña
+            new_password = request.data.get('new_password')
+            confirm_new_password = request.data.get('confirm_new_password')
+            if new_password == confirm_new_password:
+                user.set_password(new_password)
+                user.save()
+                return Response({'message': 'Contraseña restablecida correctamente'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Las contraseñas no coinciden'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Construye el enlace de restablecimiento de contraseña
-        reset_link = f"http://tu-domino.com/reset-password/{uid}/{token_generator}/"
-
-        # Envía el correo electrónico
-        subject = 'Restablecer contraseña'
-        message = f'Sigue este enlace para restablecer tu contraseña: {reset_link}'
-        send_mail(subject, message, None, [email])
-
-        return Response({'message': 'Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña'}, status=status.HTTP_200_OK)
+        return Response({'error': 'Token inválido'}, status=status.HTTP_400_BAD_REQUEST)
