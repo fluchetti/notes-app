@@ -144,7 +144,7 @@ class RequestPasswordResetView(APIView):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
 
         # Construye el enlace de restablecimiento de contraseña
-        reset_link = f"https://fluchetti.pythonanywhere.com/users/reset_password/confirm/{uid}/{token_generator}/"
+        reset_link = f"https://famous-souffle-9aa4dd.netlify.app/change_password/{uid}/{token_generator}/"
 
         # Envía el correo electrónico
         subject = 'Restablecer contraseña'
