@@ -3,6 +3,9 @@ from app.settings import AUTH_USER_MODEL
 
 
 class Note(models.Model):
+    """
+    Modelo de nota.
+    """
     author = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=50, blank=False,
                              null=False)

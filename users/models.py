@@ -3,6 +3,10 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 
 class CustomUserManager(BaseUserManager):
+    """
+    Manager de los usuarios definidos.
+    Se definen metodos de creacion de usuarios y superusuarios.
+    """
 
     def create_user(self, email, name, last_name, password=None, **extra_fields):
         if not email:
@@ -31,6 +35,9 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractUser):
+    """
+    Usuarios personalizados.
+    """
     username = None
     email = models.EmailField(null=False, blank=False, unique=True)
     name = models.CharField('Nombre', max_length=50, null=False, blank=False)
@@ -48,4 +55,4 @@ class CustomUser(AbstractUser):
         verbose_name_plural = 'Usuarios'
 
     def __str__(self):
-        return f'{self.name} {self.last_name} {self.id}'
+        return f'{self.name} {self.last_name}'

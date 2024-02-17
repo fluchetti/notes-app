@@ -16,19 +16,20 @@ class UserSerializer(serializers.Serializer):
     modified = serializers.DateTimeField(read_only=True)
 
     def create(self, validated_data):
-        # Se ejecuta luego de que se guarde una instancia del serializador.
-        print('en el create de user serializer')
+        """
+        Creacion de usuarios.
+        Se ejecuta luego de que se guarde una instancia del serializador.
+        """
         email = validated_data.get('email')
         try:
             user = CustomUser.objects.get(email=email)
-            print('Ya hay un user con ese email, usa otro, ', user)
             raise serializers.ValidationError(
                 {'email': 'El correo electronico que ingresaste ya esta en uso.'})
         except CustomUser.DoesNotExist:
             user = CustomUser.objects.create(**validated_data)
         user.set_password(validated_data['password'])
         user.save()
-        # Tengo que crearle el token
+        # Token de auth.
         token = Token.objects.create(user=user)
         return user
 
